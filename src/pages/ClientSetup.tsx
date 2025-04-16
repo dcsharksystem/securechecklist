@@ -8,7 +8,15 @@ import { Client } from '@/types';
 const ClientSetup = () => {
   const navigate = useNavigate();
 
-  const handleSaveClient = (clientName: string, logoFile: File | null) => {
+  const handleSaveClient = (
+    clientName: string, 
+    logoFile: File | null, 
+    address?: string, 
+    city?: string, 
+    state?: string, 
+    zipCode?: string,
+    country?: string
+  ) => {
     // Create the client object
     const logoUrl = logoFile 
       ? URL.createObjectURL(logoFile) 
@@ -18,6 +26,11 @@ const ClientSetup = () => {
       id: uuidv4(),
       name: clientName,
       logoUrl,
+      address,
+      city,
+      state,
+      zipCode,
+      country,
       createdAt: new Date(),
       updatedAt: new Date()
     };

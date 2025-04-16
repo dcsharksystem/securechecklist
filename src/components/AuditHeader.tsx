@@ -2,17 +2,18 @@
 import { Client } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileCog, FileDown, FilePenLine, Save } from 'lucide-react';
+import { FileCog, FileDown, FilePenLine, Save, FileText } from 'lucide-react';
 
 interface AuditHeaderProps {
   client: Client;
   onSave: () => void;
   onSubmit: () => void;
   onExportPdf: () => void;
+  onEditCover?: () => void;
   isSubmitted: boolean;
 }
 
-const AuditHeader = ({ client, onSave, onSubmit, onExportPdf, isSubmitted }: AuditHeaderProps) => {
+const AuditHeader = ({ client, onSave, onSubmit, onExportPdf, onEditCover, isSubmitted }: AuditHeaderProps) => {
   return (
     <Card className="mb-6">
       <CardContent className="p-4 sm:p-6">
@@ -34,6 +35,17 @@ const AuditHeader = ({ client, onSave, onSubmit, onExportPdf, isSubmitted }: Aud
           </div>
           
           <div className="flex flex-wrap gap-2 justify-end">
+            {onEditCover && (
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2" 
+                onClick={onEditCover}
+              >
+                <FileText size={16} />
+                Edit Cover Page
+              </Button>
+            )}
+            
             <Button 
               variant="outline" 
               className="flex items-center gap-2" 

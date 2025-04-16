@@ -4,18 +4,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Upload } from 'lucide-react';
+import { Building2, Upload, MapPin } from 'lucide-react';
 
 interface ClientFormProps {
-  onSave: (clientName: string, logoFile: File | null) => void;
+  onSave: (
+    clientName: string, 
+    logoFile: File | null, 
+    address?: string, 
+    city?: string, 
+    state?: string, 
+    zipCode?: string,
+    country?: string
+  ) => void;
   initialClientName?: string;
   initialLogoUrl?: string;
+  initialAddress?: string;
+  initialCity?: string;
+  initialState?: string;
+  initialZipCode?: string;
+  initialCountry?: string;
 }
 
-const ClientForm = ({ onSave, initialClientName = '', initialLogoUrl = '' }: ClientFormProps) => {
+const ClientForm = ({ 
+  onSave, 
+  initialClientName = '', 
+  initialLogoUrl = '',
+  initialAddress = '',
+  initialCity = '',
+  initialState = '',
+  initialZipCode = '',
+  initialCountry = ''
+}: ClientFormProps) => {
   const [clientName, setClientName] = useState(initialClientName);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(initialLogoUrl);
+  const [address, setAddress] = useState(initialAddress);
+  const [city, setCity] = useState(initialCity);
+  const [state, setState] = useState(initialState);
+  const [zipCode, setZipCode] = useState(initialZipCode);
+  const [country, setCountry] = useState(initialCountry);
 
   const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
     setClientName(e.target.value);
@@ -36,7 +63,7 @@ const ClientForm = ({ onSave, initialClientName = '', initialLogoUrl = '' }: Cli
   };
 
   const handleSubmit = () => {
-    onSave(clientName, logoFile);
+    onSave(clientName, logoFile, address, city, state, zipCode, country);
   };
 
   return (
@@ -94,6 +121,47 @@ const ClientForm = ({ onSave, initialClientName = '', initialLogoUrl = '' }: Cli
                 <Upload size={16} />
                 {previewUrl ? 'Change Logo' : 'Upload Logo'}
               </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin size={16} className="text-security-primary" />
+            <Label>Client Address</Label>
+          </div>
+          
+          <div className="space-y-2">
+            <Input 
+              placeholder="Street Address" 
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
+                placeholder="City" 
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+              <Input 
+                placeholder="State/Province" 
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <Input 
+                placeholder="Postal/Zip Code" 
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+              />
+              <Input 
+                placeholder="Country" 
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              />
             </div>
           </div>
         </div>

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { jsPDF } from 'jspdf';
@@ -15,6 +14,10 @@ import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import AuditCoverPage from '@/components/AuditCoverPage';
 
 const AuditPage = () => {
   const navigate = useNavigate();
@@ -23,6 +26,11 @@ const AuditPage = () => {
   const [controls, setControls] = useState<Control[]>([]);
   const [audit, setAudit] = useState<Audit | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [openCoverDialog, setOpenCoverDialog] = useState(false);
+  const [auditTitle, setAuditTitle] = useState('Information System & Electronic Data Processing');
+  const [financialYear, setFinancialYear] = useState('2024-2025');
+  const [auditDate, setAuditDate] = useState<Date>(new Date());
+  const coverPageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Load client data from localStorage
@@ -42,12 +50,24 @@ const AuditPage = () => {
       const parsedAudit: Audit = JSON.parse(auditData);
       setAudit(parsedAudit);
       setControls(parsedAudit.controls);
+      if (parsedAudit.title) setAuditTitle(parsedAudit.title);
+      if (parsedAudit.financialYear) setFinancialYear(parsedAudit.financialYear);
+      if (parsedAudit.auditDate) setAuditDate(new Date(parsedAudit.auditDate));
     } else {
       // Create a new audit with mock controls
       const newAudit: Audit = {
         id: uuidv4(),
         client: parsedClient,
         controls: mockControls,
+        title: auditTitle,
+        financialYear: financialYear,
+        auditDate: new Date(),
+        companyInfo: {
+          name: "Shark Cyber System",
+          address: "518, I square Corporate Park,\nNear CIMS Hospital, Science\nCity Road, Ahmedabad -\n380060 (Gujarat)"
+        },
+        confidential: true,
+        disclaimer: "Only Shark Cyber System's logo is our property, and all other logos are property of individual owners",
         createdAt: new Date(),
         updatedAt: new Date(),
         submitted: false
@@ -81,8 +101,13 @@ const AuditPage = () => {
       const updatedAudit = {
         ...audit,
         controls,
+        title: auditTitle,
+        financialYear: financialYear,
+        auditDate: auditDate,
         updatedAt: new Date()
       };
+      
+      setAudit(updatedAudit);
       
       // Save to localStorage (in a real app, save to MongoDB)
       localStorage.setItem('securityAudit', JSON.stringify(updatedAudit));
@@ -118,16 +143,85 @@ const AuditPage = () => {
   const handleExportPdf = () => {
     if (!audit || !client) return;
     
-    const doc = new jsPDF();
+    // Configure PDF size for A4
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4" // A4 size
+    });
+    
+    // Add cover page
+    if (coverPageRef.current) {
+      // First create cover page
+      doc.setFontSize(20);
+      doc.setTextColor(0, 70, 139); // #00468b color
+      doc.text(auditTitle, doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
+      
+      doc.setFontSize(16);
+      doc.text(`Audit Financial Year ${financialYear}`, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
+      
+      doc.setFontSize(16);
+      doc.setTextColor(0, 70, 139);
+      doc.text(client.name, doc.internal.pageSize.getWidth() / 2, 70, { align: 'center' });
+      
+      // Add logo if available
+      if (client.logoUrl) {
+        try {
+          // For actual implementation, you would need to handle logo as a data URL
+          // This is a simplification - you'd need to actually render the image
+          const imgData = client.logoUrl;
+          doc.addImage(imgData, 'PNG', doc.internal.pageSize.getWidth() / 2 - 30, 80, 60, 60);
+        } catch (e) {
+          console.error("Error adding logo to PDF", e);
+        }
+      }
+      
+      // Add date
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      const formattedDate = auditDate.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+      doc.text(formattedDate, 20, 180);
+      
+      // Add client and company addresses
+      doc.setFontSize(11);
+      doc.text(client.name, 20, 210);
+      if (client.address) {
+        doc.text(client.address, 20, 215);
+      }
+      
+      // Add Shark Cyber System info
+      doc.setFontSize(11);
+      doc.text("Shark Cyber System", doc.internal.pageSize.getWidth() - 20, 210, { align: 'right' });
+      doc.text("518, I square Corporate Park,", doc.internal.pageSize.getWidth() - 20, 215, { align: 'right' });
+      doc.text("Near CIMS Hospital, Science", doc.internal.pageSize.getWidth() - 20, 220, { align: 'right' });
+      doc.text("City Road, Ahmedabad -", doc.internal.pageSize.getWidth() - 20, 225, { align: 'right' });
+      doc.text("380060 (Gujarat)", doc.internal.pageSize.getWidth() - 20, 230, { align: 'right' });
+      
+      // Add confidentiality and disclaimer 
+      doc.setFontSize(8);
+      doc.text("CONFIDENTIAL DOCUMENT:", 20, 260);
+      doc.text("Not to be circulated or reproduced without appropriate authorization", 20, 265);
+      
+      doc.text("DISCLAIMER:", 20, 270);
+      doc.text("Only Shark Cyber System's logo is our property, and all other logos are property of individual owners", 20, 275);
+    }
+    
+    // Add a new page for the summary
+    doc.addPage();
     
     // Add title
     doc.setFontSize(20);
+    doc.setTextColor(0, 0, 0);
     doc.text('Security Compliance Audit', 14, 22);
     
     // Add client info
     doc.setFontSize(12);
     doc.text(`Client: ${client.name}`, 14, 32);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 38);
+    doc.text(`Date: ${auditDate.toLocaleDateString()}`, 14, 38);
     
     // Add summary
     doc.setFontSize(16);
@@ -225,6 +319,24 @@ const AuditPage = () => {
   // Check if any controls are not addressed
   const hasUnaddressedControls = controls.some(control => !control.status);
 
+  const handleCoverInfoSave = () => {
+    if (audit) {
+      const updatedAudit = {
+        ...audit,
+        title: auditTitle,
+        financialYear: financialYear,
+        auditDate: auditDate,
+      };
+      setAudit(updatedAudit);
+      localStorage.setItem('securityAudit', JSON.stringify(updatedAudit));
+      setOpenCoverDialog(false);
+      toast({
+        title: "Cover Page Updated",
+        description: "Your audit cover page information has been updated.",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
       <div className="container max-w-5xl pt-6">
@@ -233,9 +345,62 @@ const AuditPage = () => {
           onSave={handleSaveAudit}
           onSubmit={handleSubmitAudit}
           onExportPdf={handleExportPdf}
+          onEditCover={() => setOpenCoverDialog(true)}
           isSubmitted={audit.submitted}
         />
         
+        {/* Cover Page Dialog */}
+        <Dialog open={openCoverDialog} onOpenChange={setOpenCoverDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Audit Cover Page</DialogTitle>
+              <DialogDescription>
+                Update the information that will appear on your audit cover page.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="auditTitle" className="text-right">
+                  Audit Title
+                </Label>
+                <Input
+                  id="auditTitle"
+                  value={auditTitle}
+                  onChange={(e) => setAuditTitle(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="financialYear" className="text-right">
+                  Financial Year
+                </Label>
+                <Input
+                  id="financialYear"
+                  value={financialYear}
+                  onChange={(e) => setFinancialYear(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="auditDate" className="text-right">
+                  Audit Date
+                </Label>
+                <Input
+                  id="auditDate"
+                  type="date"
+                  value={auditDate.toISOString().split('T')[0]}
+                  onChange={(e) => setAuditDate(new Date(e.target.value))}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" onClick={handleCoverInfoSave}>Save changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Alerts */}
         {hasUnaddressedControls && !audit.submitted && (
           <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="h-4 w-4" />
@@ -255,6 +420,13 @@ const AuditPage = () => {
             </AlertDescription>
           </Alert>
         )}
+        
+        {/* Hidden cover page for reference */}
+        <div className="hidden">
+          <div ref={coverPageRef}>
+            <AuditCoverPage audit={audit} />
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="md:col-span-3">
