@@ -52,6 +52,20 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+        // Audit status colors
+        status: {
+          compliant: '#10B981',      // Green
+          notCompliant: '#EF4444',   // Red
+          partial: '#F59E0B',        // Amber
+          notApplicable: '#6B7280',  // Gray
+        },
+        security: {
+          primary: '#0EA5E9',        // Sky blue
+          secondary: '#0369A1',      // Darker blue
+          accent: '#0284C7',         // Medium blue
+          light: '#E0F2FE',          // Light blue
+          dark: '#075985',           // Very dark blue
+        },
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
