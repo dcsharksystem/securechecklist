@@ -67,7 +67,7 @@ const ClientForm = ({
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full h-full">
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
           <Building2 className="text-security-primary" size={24} />
