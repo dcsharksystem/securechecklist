@@ -16,6 +16,32 @@ export interface Client {
 
 export type ComplianceStatus = "compliant" | "notCompliant" | "partial" | "notApplicable";
 
+// Extended implementation status for more descriptive table display
+export type ImplementationStatus = 
+  | "fullyImplemented" 
+  | "partiallyImplemented" 
+  | "notImplemented" 
+  | "notApplicable";
+
+// Convert between ComplianceStatus and ImplementationStatus
+export const mapComplianceToImplementation = (status: ComplianceStatus): ImplementationStatus => {
+  switch (status) {
+    case "compliant": return "fullyImplemented";
+    case "notCompliant": return "notImplemented";
+    case "partial": return "partiallyImplemented";
+    case "notApplicable": return "notApplicable";
+  }
+};
+
+export const mapImplementationToCompliance = (status: ImplementationStatus): ComplianceStatus => {
+  switch (status) {
+    case "fullyImplemented": return "compliant";
+    case "notImplemented": return "notCompliant";
+    case "partiallyImplemented": return "partial";
+    case "notApplicable": return "notApplicable";
+  }
+};
+
 export interface Control {
   id: string;
   category: string;
@@ -26,6 +52,8 @@ export interface Control {
   attachmentUrl?: string;
   attachmentName?: string;
   updatedAt: Date;
+  serialNumber?: number; // Serial number for the control in the list
+  detailedComment?: string; // Detailed compliance/non-compliance details
 }
 
 export interface Audit {

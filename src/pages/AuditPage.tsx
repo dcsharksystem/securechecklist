@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,12 +9,13 @@ import { mockControls } from '@/data/mockData';
 import AuditHeader from '@/components/AuditHeader';
 import AuditSummary from '@/components/AuditSummary';
 import ControlItem from '@/components/ControlItem';
+import AuditTableView from '@/components/AuditTableView';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, Table as TableIcon, Layout } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +28,7 @@ const AuditPage = () => {
   const [controls, setControls] = useState<Control[]>([]);
   const [audit, setAudit] = useState<Audit | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [openCoverDialog, setOpenCoverDialog] = useState(false);
   const [auditTitle, setAuditTitle] = useState('Information System & Electronic Data Processing');
   const [financialYear, setFinancialYear] = useState('2024-2025');
@@ -49,16 +52,28 @@ const AuditPage = () => {
     if (auditData) {
       const parsedAudit: Audit = JSON.parse(auditData);
       setAudit(parsedAudit);
-      setControls(parsedAudit.controls);
+      
+      // Process controls to ensure they have serial numbers
+      const controlsWithSerialNumbers = parsedAudit.controls.map((control, index) => ({
+        ...control,
+        serialNumber: control.serialNumber || index + 1
+      }));
+      
+      setControls(controlsWithSerialNumbers);
       if (parsedAudit.title) setAuditTitle(parsedAudit.title);
       if (parsedAudit.financialYear) setFinancialYear(parsedAudit.financialYear);
       if (parsedAudit.auditDate) setAuditDate(new Date(parsedAudit.auditDate));
     } else {
       // Create a new audit with mock controls
+      const controlsWithSerialNumbers = mockControls.map((control, index) => ({
+        ...control,
+        serialNumber: index + 1
+      }));
+      
       const newAudit: Audit = {
         id: uuidv4(),
         client: parsedClient,
-        controls: mockControls,
+        controls: controlsWithSerialNumbers,
         title: auditTitle,
         financialYear: financialYear,
         auditDate: new Date(),
@@ -73,7 +88,7 @@ const AuditPage = () => {
         submitted: false
       };
       setAudit(newAudit);
-      setControls(mockControls);
+      setControls(controlsWithSerialNumbers);
       
       // Save to localStorage
       localStorage.setItem('securityAudit', JSON.stringify(newAudit));
@@ -339,7 +354,7 @@ const AuditPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
-      <div className="container max-w-5xl pt-6">
+      <div className="container max-w-6xl pt-6">
         <AuditHeader 
           client={client} 
           onSave={handleSaveAudit}
@@ -434,19 +449,45 @@ const AuditPage = () => {
           </div>
         </div>
         
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Security Controls</h2>
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="compliant">Compliant</TabsTrigger>
-              <TabsTrigger value="notCompliant">Not Compliant</TabsTrigger>
-              <TabsTrigger value="partial">Partial</TabsTrigger>
-              <TabsTrigger value="notApplicable">N/A</TabsTrigger>
-            </TabsList>
+        {/* View Toggle */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Security Controls</h2>
+          <div className="flex gap-2">
+            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mr-4">
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="compliant">Compliant</TabsTrigger>
+                <TabsTrigger value="notCompliant">Not Compliant</TabsTrigger>
+                <TabsTrigger value="partial">Partial</TabsTrigger>
+                <TabsTrigger value="notApplicable">N/A</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <div className="flex border rounded-md overflow-hidden">
+              <Button 
+                variant={viewMode === 'cards' ? 'default' : 'outline'} 
+                size="sm"
+                className="rounded-none border-0"
+                onClick={() => setViewMode('cards')}
+              >
+                <Layout size={16} className="mr-1" />
+                Cards
+              </Button>
+              <Button 
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-none border-0"
+                onClick={() => setViewMode('table')}
+              >
+                <TableIcon size={16} className="mr-1" />
+                Table
+              </Button>
+            </div>
           </div>
-          
-          <TabsContent value={activeTab}>
+        </div>
+        
+        {viewMode === 'cards' ? (
+          <div>
             {filteredControls.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground">
                 No controls found in this category.
@@ -462,8 +503,14 @@ const AuditPage = () => {
                 ))}
               </>
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        ) : (
+          <AuditTableView 
+            controls={filteredControls} 
+            onUpdateControl={handleUpdateControl}
+            readOnly={audit.submitted}
+          />
+        )}
         
         <div className="mt-8 flex justify-end">
           <Button 
