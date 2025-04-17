@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,10 +20,8 @@ export const useAudit = () => {
   const [auditDate, setAuditDate] = useState<Date>(new Date());
 
   useEffect(() => {
-    // Load client data from localStorage
     const clientData = localStorage.getItem('securityAuditClient');
     if (!clientData) {
-      // Redirect to client setup if no client data is found
       navigate('/');
       return;
     }
@@ -32,13 +29,11 @@ export const useAudit = () => {
     const parsedClient: Client = JSON.parse(clientData);
     setClient(parsedClient);
     
-    // Load audit data from localStorage or create a new one
     const auditData = localStorage.getItem('securityAudit');
     if (auditData) {
       const parsedAudit: Audit = JSON.parse(auditData);
       setAudit(parsedAudit);
       
-      // Process controls to ensure they have serial numbers
       const controlsWithSerialNumbers = parsedAudit.controls.map((control, index) => ({
         ...control,
         serialNumber: control.serialNumber || index + 1
@@ -49,7 +44,6 @@ export const useAudit = () => {
       if (parsedAudit.financialYear) setFinancialYear(parsedAudit.financialYear);
       if (parsedAudit.auditDate) setAuditDate(new Date(parsedAudit.auditDate));
     } else {
-      // Create a new audit with mock controls
       const controlsWithSerialNumbers = mockControls.map((control, index) => ({
         ...control,
         serialNumber: index + 1
@@ -75,7 +69,6 @@ export const useAudit = () => {
       setAudit(newAudit);
       setControls(controlsWithSerialNumbers);
       
-      // Save to localStorage
       localStorage.setItem('securityAudit', JSON.stringify(newAudit));
     }
   }, [navigate]);
@@ -109,7 +102,6 @@ export const useAudit = () => {
       
       setAudit(updatedAudit);
       
-      // Save to localStorage (in a real app, save to MongoDB)
       localStorage.setItem('securityAudit', JSON.stringify(updatedAudit));
       
       toast({
@@ -130,7 +122,6 @@ export const useAudit = () => {
       
       setAudit(updatedAudit);
       
-      // Save to localStorage (in a real app, save to MongoDB)
       localStorage.setItem('securityAudit', JSON.stringify(updatedAudit));
       
       toast({
@@ -142,11 +133,26 @@ export const useAudit = () => {
 
   const handleExportPdf = () => {
     if (audit && client) {
-      exportAuditToPdf(audit, client);
-      
+      try {
+        exportAuditToPdf(audit, client);
+        
+        toast({
+          title: "PDF Exported",
+          description: "Your audit has been exported as a PDF.",
+        });
+      } catch (error) {
+        console.error("Error exporting PDF:", error);
+        toast({
+          title: "Export Failed",
+          description: "There was an error exporting the PDF. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
       toast({
-        title: "PDF Exported",
-        description: "Your audit has been exported as a PDF.",
+        title: "Export Failed",
+        description: "Missing audit or client data. Please ensure the audit is saved.",
+        variant: "destructive",
       });
     }
   };
@@ -169,12 +175,10 @@ export const useAudit = () => {
     }
   };
 
-  // Filtered controls based on active tab
   const filteredControls = activeTab === 'all' 
     ? controls 
     : controls.filter(control => control.status === activeTab);
 
-  // Check if any controls are not addressed
   const hasUnaddressedControls = controls.some(control => !control.status);
 
   return {

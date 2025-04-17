@@ -55,33 +55,22 @@ const AuditHeader = ({ client, onSave, onSubmit, onExportPdf, onEditCover, isSub
               Save
             </Button>
             
-            {isSubmitted ? (
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2" 
-                onClick={onExportPdf}
-              >
-                <FileDown size={16} />
-                Export PDF
-              </Button>
-            ) : (
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2" 
+              onClick={onExportPdf}
+            >
+              <FileDown size={16} />
+              Export PDF
+            </Button>
+            
+            {!isSubmitted && (
               <Button 
                 className="flex items-center gap-2 bg-security-primary hover:bg-security-secondary" 
                 onClick={onSubmit}
               >
                 <FileCog size={16} />
                 Submit Audit
-              </Button>
-            )}
-            
-            {isSubmitted && (
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2" 
-                onClick={() => {}}
-              >
-                <FilePenLine size={16} />
-                Edit Audit
               </Button>
             )}
           </div>

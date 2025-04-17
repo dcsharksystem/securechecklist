@@ -1,6 +1,6 @@
 
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { Client, Control, Audit, ComplianceStatus } from '@/types';
 
 export const exportAuditToPdf = (audit: Audit, client: Client): void => {
@@ -28,10 +28,8 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
   // Add logo if available
   if (client.logoUrl) {
     try {
-      // For actual implementation, you would need to handle logo as a data URL
-      // This is a simplification - you'd need to actually render the image
-      const imgData = client.logoUrl;
-      doc.addImage(imgData, 'PNG', doc.internal.pageSize.getWidth() / 2 - 30, 80, 60, 60);
+      // Client logo URLs from localStorage are dataURLs, not file URLs
+      doc.addImage(client.logoUrl, 'JPEG', doc.internal.pageSize.getWidth() / 2 - 30, 80, 60, 60);
     } catch (e) {
       console.error("Error adding logo to PDF", e);
     }
@@ -108,8 +106,7 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
     ? 0 
     : Math.round((summary.compliant / totalApplicable) * 100);
   
-  // Add summary table
-  doc.setFontSize(12);
+  // Add summary table using autoTable
   const summaryData = [
     ['Compliant', summary.compliant],
     ['Not Compliant', summary.notCompliant],
@@ -118,7 +115,7 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
     ['Overall Compliance', `${compliancePercentage}%`],
   ];
   
-  (doc as any).autoTable({
+  autoTable(doc, {
     startY: 52,
     head: [['Status', 'Count']],
     body: summaryData,
@@ -128,7 +125,7 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
   
   // Add controls table
   doc.setFontSize(16);
-  doc.text('Control Details', 14, (doc as any).lastAutoTable.finalY + 10);
+  doc.text('Control Details', 14, doc.lastAutoTable.finalY + 10);
   
   const controlsData = audit.controls.map(control => [
     control.category,
@@ -137,8 +134,8 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
     control.comment || control.detailedComment || 'No comments',
   ]);
   
-  (doc as any).autoTable({
-    startY: (doc as any).lastAutoTable.finalY + 14,
+  autoTable(doc, {
+    startY: doc.lastAutoTable.finalY + 14,
     head: [['Category', 'Control', 'Status', 'Comments']],
     body: controlsData,
     theme: 'striped',
