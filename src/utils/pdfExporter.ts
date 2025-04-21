@@ -115,18 +115,22 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
     ['Overall Compliance', `${compliancePercentage}%`],
   ];
 
-  // Capture the table to get finalY
-  const summaryTable = autoTable(doc, {
+  // Get the finalY position after the summary table is drawn
+  let finalY = 52; // Default starting position
+  autoTable(doc, {
     startY: 52,
     head: [['Status', 'Count']],
     body: summaryData,
     theme: 'striped',
     headStyles: { fillColor: [3, 105, 161] },
+    didDrawPage: (data) => {
+      finalY = data.cursor.y;
+    },
   });
 
   // Add controls table
   doc.setFontSize(16);
-  doc.text('Control Details', 14, summaryTable.finalY + 10);
+  doc.text('Control Details', 14, finalY + 10);
 
   const controlsData = audit.controls.map(control => [
     control.category,
@@ -135,9 +139,9 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
     control.comment || control.detailedComment || 'No comments',
   ]);
 
-  // Capture controls table for its finalY in case needed later
-  const controlsTable = autoTable(doc, {
-    startY: summaryTable.finalY + 14,
+  // Capture controls table details
+  autoTable(doc, {
+    startY: finalY + 14,
     head: [['Category', 'Control', 'Status', 'Comments']],
     body: controlsData,
     theme: 'striped',
