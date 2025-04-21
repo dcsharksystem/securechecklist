@@ -57,8 +57,14 @@ const ControlsManagementPage = () => {
       const savedControls = audit.controls || [];
       setControls(savedControls);
       
-      // Extract unique categories
-      const uniqueCategories = [...new Set(savedControls.map((control: Control) => control.category))];
+      // Extract unique categories with proper type checking
+      const uniqueCategories = Array.from(
+        new Set(
+          savedControls
+            .map((control: Control) => control.category)
+            .filter((cat): cat is string => typeof cat === 'string')
+        )
+      );
       setCategories(uniqueCategories);
     } else {
       // Redirect to client setup if no audit exists
