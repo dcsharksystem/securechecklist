@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -57,15 +56,14 @@ const ControlsManagementPage = () => {
       const savedControls = audit.controls || [];
       setControls(savedControls);
       
-      // Extract unique categories with proper type checking
-      const uniqueCategories = Array.from(
-        new Set(
-          savedControls
-            .map((control: Control) => control.category)
-            .filter((cat): cat is string => typeof cat === 'string')
-        )
-      );
-      setCategories(uniqueCategories);
+      // Extract unique categories with explicit typing
+      const categoryValues: string[] = [];
+      savedControls.forEach((control: Control) => {
+        if (control.category && typeof control.category === 'string' && !categoryValues.includes(control.category)) {
+          categoryValues.push(control.category);
+        }
+      });
+      setCategories(categoryValues);
     } else {
       // Redirect to client setup if no audit exists
       toast({
