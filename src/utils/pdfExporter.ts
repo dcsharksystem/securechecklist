@@ -1,39 +1,30 @@
 
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { UserOptions, RowInput } from 'jspdf-autotable';
 import { Client, Control, Audit, ComplianceStatus } from '@/types';
-
-// Extend the jsPDF type to include lastAutoTable property
-declare module 'jspdf' {
-  interface jsPDF {
-    lastAutoTable: {
-      finalY: number;
-    };
-  }
-}
 
 export const exportAuditToPdf = (audit: Audit, client: Client): void => {
   if (!audit || !client) return;
-  
+
   // Configure PDF size for A4
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4" // A4 size
   });
-  
+
   // Add cover page
   doc.setFontSize(20);
   doc.setTextColor(0, 70, 139); // #00468b color
   doc.text(audit.title || 'Information System & Electronic Data Processing', doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
-  
+
   doc.setFontSize(16);
   doc.text(`Audit Financial Year ${audit.financialYear || ''}`, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
-  
+
   doc.setFontSize(16);
   doc.setTextColor(0, 70, 139);
   doc.text(client.name, doc.internal.pageSize.getWidth() / 2, 70, { align: 'center' });
-  
+
   // Add logo if available
   if (client.logoUrl) {
     try {
@@ -43,7 +34,7 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
       console.error("Error adding logo to PDF", e);
     }
   }
-  
+
   // Add date
   const auditDate = audit.auditDate ? new Date(audit.auditDate) : new Date();
   doc.setFontSize(12);
@@ -54,14 +45,14 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
     year: 'numeric'
   });
   doc.text(formattedDate, 20, 180);
-  
+
   // Add client and company addresses
   doc.setFontSize(11);
   doc.text(client.name, 20, 210);
   if (client.address) {
     doc.text(client.address, 20, 215);
   }
-  
+
   // Add Shark Cyber System info
   doc.setFontSize(11);
   doc.text("Shark Cyber System", doc.internal.pageSize.getWidth() - 20, 210, { align: 'right' });
@@ -69,32 +60,32 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
   doc.text("Near CIMS Hospital, Science", doc.internal.pageSize.getWidth() - 20, 220, { align: 'right' });
   doc.text("City Road, Ahmedabad -", doc.internal.pageSize.getWidth() - 20, 225, { align: 'right' });
   doc.text("380060 (Gujarat)", doc.internal.pageSize.getWidth() - 20, 230, { align: 'right' });
-  
+
   // Add confidentiality and disclaimer 
   doc.setFontSize(8);
   doc.text("CONFIDENTIAL DOCUMENT:", 20, 260);
   doc.text("Not to be circulated or reproduced without appropriate authorization", 20, 265);
-  
+
   doc.text("DISCLAIMER:", 20, 270);
   doc.text("Only Shark Cyber System's logo is our property, and all other logos are property of individual owners", 20, 275);
-  
+
   // Add a new page for the summary
   doc.addPage();
-  
+
   // Add title
   doc.setFontSize(20);
   doc.setTextColor(0, 0, 0);
   doc.text('Security Compliance Audit', 14, 22);
-  
+
   // Add client info
   doc.setFontSize(12);
   doc.text(`Client: ${client.name}`, 14, 32);
   doc.text(`Date: ${auditDate.toLocaleDateString()}`, 14, 38);
-  
+
   // Add summary
   doc.setFontSize(16);
   doc.text('Compliance Summary', 14, 48);
-  
+
   // Count controls by status
   const summary = audit.controls.reduce(
     (acc, control) => {
@@ -108,13 +99,13 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
       notApplicable: 0,
     }
   );
-  
+
   // Calculate compliance percentage
   const totalApplicable = audit.controls.length - summary.notApplicable;
-  const compliancePercentage = totalApplicable === 0 
-    ? 0 
+  const compliancePercentage = totalApplicable === 0
+    ? 0
     : Math.round((summary.compliant / totalApplicable) * 100);
-  
+
   // Add summary table using autoTable
   const summaryData = [
     ['Compliant', summary.compliant],
@@ -123,28 +114,30 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
     ['Not Applicable', summary.notApplicable],
     ['Overall Compliance', `${compliancePercentage}%`],
   ];
-  
-  autoTable(doc, {
+
+  // Capture the table to get finalY
+  const summaryTable = autoTable(doc, {
     startY: 52,
     head: [['Status', 'Count']],
     body: summaryData,
     theme: 'striped',
     headStyles: { fillColor: [3, 105, 161] },
   });
-  
+
   // Add controls table
   doc.setFontSize(16);
-  doc.text('Control Details', 14, doc.lastAutoTable.finalY + 10);
-  
+  doc.text('Control Details', 14, summaryTable.finalY + 10);
+
   const controlsData = audit.controls.map(control => [
     control.category,
     control.title,
     getStatusText(control.status),
     control.comment || control.detailedComment || 'No comments',
   ]);
-  
-  autoTable(doc, {
-    startY: doc.lastAutoTable.finalY + 14,
+
+  // Capture controls table for its finalY in case needed later
+  const controlsTable = autoTable(doc, {
+    startY: summaryTable.finalY + 14,
     head: [['Category', 'Control', 'Status', 'Comments']],
     body: controlsData,
     theme: 'striped',
@@ -156,7 +149,7 @@ export const exportAuditToPdf = (audit: Audit, client: Client): void => {
       3: { cellWidth: 60 },
     },
   });
-  
+
   // Save PDF
   doc.save(`security_audit_${client.name.replace(/\s+/g, '_')}.pdf`);
 };
