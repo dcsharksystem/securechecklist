@@ -64,7 +64,7 @@ const ClientSetup = () => {
             <CardContent className="p-6 flex flex-col items-center">
               <div className="mb-6 w-48 h-48 flex items-center justify-center">
                 <img 
-                  src="/placeholder.svg" 
+                  src="/ourlogo.png" 
                   alt="Shark Cyber System Logo" 
                   className="max-w-full max-h-full"
                 />
