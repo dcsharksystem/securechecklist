@@ -37,6 +37,7 @@ interface ControlsFormProps {
 
 export default function ControlsForm({
   isEditing,
+  currentControl,
   title,
   description,
   category,
@@ -54,6 +55,16 @@ export default function ControlsForm({
   handleSaveControl,
   handleCancel,
 }: ControlsFormProps) {
+  // Ensure form is populated with current control data when editing
+  useEffect(() => {
+    if (isEditing && currentControl) {
+      setTitle(currentControl.title);
+      setDescription(currentControl.description);
+      setCategory(currentControl.category);
+      setStatus(currentControl.status);
+    }
+  }, [currentControl, isEditing, setTitle, setDescription, setCategory, setStatus]);
+
   return (
     <div>
       <div className="space-y-4">

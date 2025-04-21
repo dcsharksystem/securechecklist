@@ -33,18 +33,23 @@ const ControlsManagementPage = () => {
       const savedControls = audit.controls || [];
       setControls(savedControls);
 
-      // Extract unique categories with explicit typing
-      const categoryValues: string[] = [];
+      // Extract unique categories
+      const uniqueCategories: string[] = [];
       savedControls.forEach((control: Control) => {
         if (
           control.category &&
           typeof control.category === "string" &&
-          !categoryValues.includes(control.category)
+          !uniqueCategories.includes(control.category)
         ) {
-          categoryValues.push(control.category);
+          uniqueCategories.push(control.category);
         }
       });
-      setCategories(categoryValues);
+      setCategories(uniqueCategories);
+      
+      // Set default category if available
+      if (uniqueCategories.length > 0 && !category) {
+        setCategory(uniqueCategories[0]);
+      }
     } else {
       // Redirect to client setup if no audit exists
       toast({
@@ -54,7 +59,7 @@ const ControlsManagementPage = () => {
       });
       navigate("/");
     }
-  }, [navigate, toast]);
+  }, [navigate, toast, category]);
 
   const handleAddCategory = () => {
     if (newCategory.trim() && !categories.includes(newCategory.trim())) {
@@ -245,4 +250,3 @@ const ControlsManagementPage = () => {
 };
 
 export default ControlsManagementPage;
-
