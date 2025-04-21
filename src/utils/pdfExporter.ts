@@ -3,6 +3,15 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Client, Control, Audit, ComplianceStatus } from '@/types';
 
+// Extend the jsPDF type to include lastAutoTable property
+declare module 'jspdf' {
+  interface jsPDF {
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
+
 export const exportAuditToPdf = (audit: Audit, client: Client): void => {
   if (!audit || !client) return;
   
