@@ -1,5 +1,5 @@
-
 import { useRef } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import { useAudit } from '@/hooks/useAudit';
 import AuditHeader from '@/components/AuditHeader';
 import AuditSummary from '@/components/AuditSummary';
@@ -10,8 +10,11 @@ import AuditAlerts from '@/components/AuditAlerts';
 import AuditViewToggle from '@/components/AuditViewToggle';
 import AuditActionButtons from '@/components/AuditActionButtons';
 import AuditCoverPage from '@/components/AuditCoverPage';
+import { Button } from '@/components/ui/button';
+import { Shield } from 'lucide-react';
 
 const AuditPage = () => {
+  const navigate = useNavigate();
   const { 
     client, 
     audit, 
@@ -79,8 +82,20 @@ const AuditPage = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="md:col-span-3">
+          <div className="md:col-span-2">
             <AuditSummary controls={controls} />
+          </div>
+          <div className="md:col-span-1 flex items-center justify-end">
+            {!audit.submitted && (
+              <Button 
+                onClick={() => navigate('/controls')}
+                className="flex items-center gap-2"
+                variant="outline"
+              >
+                <Shield size={16} />
+                Manage Controls
+              </Button>
+            )}
           </div>
         </div>
         
